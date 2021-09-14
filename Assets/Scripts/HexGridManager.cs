@@ -11,32 +11,49 @@ public class HexGridManager : MonoBehaviour
 {
 
     public HexCell hexCellSource;
-    public int rowCount = 8;
-    public int columnCount = 12;
-    
-    private List<HexCell> cells = new List<HexCell>();
-    private Vector3 LeftBottomPoint =  new Vector3(-18,0,-8);
-    private Vector3 LeftBottomPoint2 =  new Vector3(-16.5f,0,-7);
+    public int rowCount = 11;
+    public int columnCount = 20;
 
-    private void CreateHexCell(Vector3 position) {
+    private int countCell = 0;
+    
+    public List<HexCell> cells = new List<HexCell>();
+    private List<int> mapGrid = new List<int>();
+    public Dictionary<int, List<HexCell>> mapCells = new Dictionary<int, List<HexCell>>();
+    private Vector3 firstCell = new Vector3(0,0,-2);
+
+    private void CreateHexCell(Vector3 position, int row) {
+        //Debug.LogError(position);
         var cell = Instantiate(hexCellSource, position, Quaternion.identity);
+        cell.init(mapGrid.ElementAt(countCell++), countCell);
         // cell.gameObject.hideFlags = HideFlags.HideInHierarchy;
         cells.Add(cell);
+        if(!mapCells.ContainsKey(row)) {
+            mapCells[row] = new List<HexCell>();
+        }
+        mapCells[row].Add(cell);
+     
     }
 
     public void Build() {
         Clear();
+        var sNumbers = "4,4,4,4,4,3,3,3,3,3,3,4,4,2,3,3,3,2,4,1,4,0,4,1,4,4,2,3,3,3,4,4,4,4,4,4,4,4,0,4,4,4,2,4,2,1,4,3,4,2,1,4,4,4,4,1,4,4,4,4,1,4,2,3,2,4,4,4,4,4,4,4,4,4,3,2,3,3,3,3,4,4,3,3,2,1,4,4,4,4,4,4,1,2,4,3,4,4,4,4,1,4,2,3,2,4,4,1,4,4,4,4,4,4,4,3,4,1,4,4,4,4,4,3,4,1,4,4,4,1,4,4,4,2,3,4,1,4,3,4,4,4,4,3,3,4,4,4,4,4,4,4,4,3,3,2,4,4,4,3,4,4,4,4,4,4,4,3,3,4,4,1,4,2,3,3,3,4,4,4,4,0,4,4,4,4,4,3,4,4,4,4,4,4,4,3,3,2,0,4,1,4,4,3,3,4,4,4,4,4,4,4,1,4,2,3,3,4,4,4";
+        this.mapGrid = sNumbers.Split(',').Select(int.Parse).ToList();
         if (hexCellSource == null) {
             Debug.LogError("C'mon you forget to provide the hex cell source");
-        } else {
-            for (int j = 0; j <= rowCount; j++) {
-                for (int i = 0; i <= columnCount; i++) {
-                    Vector3 position = LeftBottomPoint + new Vector3(3*i,0,2*j);
-                    CreateHexCell(position);
-                    if( i < columnCount && j < rowCount) {
-                        Vector3 position2 = LeftBottomPoint2 + new Vector3(3*i,0,2*j);
-                        CreateHexCell(position2);
+        } else { 
+            Vector3 tmp = new Vector3(0,0,0);
+            for (int j = 0; j < rowCount; j++) {
+                tmp = new Vector3(0,0,0);
+                firstCell = new Vector3(0,0,j*2);  
+                for (int i = 0; i < columnCount; i++) {
+                    firstCell = firstCell + tmp;
+                    CreateHexCell(firstCell,j);
+                    if(isPaire(i)) {
+                        tmp = new Vector3(1.5f,0,-1);
+                    } else {
+                        tmp = new Vector3(1.5f,0,1);
                     }
+                    
                 }
             }
         }
@@ -52,12 +69,16 @@ public class HexGridManager : MonoBehaviour
             DestroyImmediate(item.gameObject);
         }
         this.cells.Clear();
+        this.mapGrid.Clear();
+        countCell = 0;
     }
 
     public void CountCells() {
         Debug.LogError(this.cells.Count);
     }
-
+    private bool isPaire(int x) {
+        return x%2 == 0;
+    }
 
 #if UNITY_EDITOR
     [CustomEditor(typeof(HexGridManager))]
